@@ -1,0 +1,3 @@
+[submodule "SPIRAL-tensorflow"]
+	path = SPIRAL-tensorflow
+	url = git@github.com:reiinakano/SPIRAL-tensorflow.git
