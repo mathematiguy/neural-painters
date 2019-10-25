@@ -1,7 +1,7 @@
 DOCKER_REGISTRY := mathematiguy
 IMAGE_NAME := $(shell basename `git rev-parse --show-toplevel` | tr '[:upper:]' '[:lower:]')
 IMAGE := $(DOCKER_REGISTRY)/$(IMAGE_NAME)
-RUN ?= docker run $(DOCKER_ARGS) --rm -v $$(pwd):/work -w /work -u $(UID):$(GID) $(IMAGE)
+RUN ?= docker run $(DOCKER_ARGS) --runtime=nvidia --rm -v $$(pwd):/work -w /work -u $(UID):$(GID) $(IMAGE)
 UID ?= $(shell id -u)
 GID ?= $(shell id -g)
 DOCKER_ARGS ?= 
@@ -20,12 +20,52 @@ jupyter:
 		--ip 0.0.0.0 \
 		--NotebookApp.iopub_msg_rate_limit=1000000 \
 		--NotebookApp.password=$(shell $(RUN) \
-			python3 -c \
+			python -c \
 			"from IPython.lib import passwd; print(passwd('$(JUPYTER_PASSWORD)'))"\
 			)'
 
+TENSORBOARD_DIR ?= notebooks/logdir
+tensorboard: DOCKER_ARGS=-p 6006:6006
+tensorboard:
+	$(RUN) tensorboard --logdir $(TENSORBOARD_DIR)
+
+notebooks/strokes-dataset: UID=root
+notebooks/strokes-dataset: GID=root
+notebooks/strokes-dataset:
+	$(RUN) bash -c '(cd notebooks && \
+		kaggle datasets download reiinakano/mypaint_brushstrokes --force) &&
+		unzip mypaint_brushstrokes.zip'
+
+notebooks/celeba-dataset: UID=root
+notebooks/celeba-dataset: GID=root
+notebooks/celeba-dataset:
+	$(RUN) bash -c '(cd notebooks && \
+		kaggle datasets download jessicali9530/celeba-dataset --force && \
+		unzip celeba-dataset.zip)'
+
+
+dependencies/libmypaint: dependencies/libmypaint-1.3.0.tar.xz
+	(cd $(dir $@) && tar -xvf $(notdir $<) && mv libmypaint-1.3.0 libmypaint)
+
+dependencies/libmypaint-1.3.0.tar.xz:
+	wget https://github.com/mypaint/libmypaint/releases/download/v1.3.0/libmypaint-1.3.0.tar.xz -P $(dir $@)
+
+dependencies/mypaint-1.2.1.tar.xz:
+	wget https://github.com/mypaint/mypaint/releases/download/v1.2.1/mypaint-1.2.1.tar.xz -P $(dir $@)
+
+dependencies/mypaint: dependencies/mypaint-1.2.1.tar.xz
+	(cd $(dir $@) && tar -xvf mypaint-1.2.1.tar.xz && mv mypaint-1.2.1 mypaint)
+
+dependencies/ngrok:
+	(cd $(dir $@) && \
+	 wget https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip && \
+	 unzip $(notdir $@))
+
+clean:
+	rm -rf dependencies/*
+
 .PHONY: docker
-docker:
+docker: dependencies/libmypaint dependencies/mypaint dependencies/ngrok
 	docker build --tag $(IMAGE):$(GIT_TAG) .
 	docker tag $(IMAGE):$(GIT_TAG) $(IMAGE):latest
 

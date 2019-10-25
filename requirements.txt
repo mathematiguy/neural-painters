@@ -1,1 +1,13 @@
-
+cloudpickle==1.2.1
+future-fstrings==1.2.0
+ipdb==0.12.2
+jupyterlab==0.33.12
+jupyterlab-launcher==0.11.2
+kaggle==1.5.5
+matplotlib==2.2.4
+moviepy==1.0.0
+numpy==1.16.4
+pathlib==1.0.1
+pathlib2==2.3.3
+Pillow==6.1.0
+tqdm==4.33.0

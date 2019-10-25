@@ -61,3 +61,11 @@ typings/
 .next
 dependencies/*
 notebooks/.ipynb_checkpoints
+notebooks/data/*
+notebooks/*.zip
+notebooks/*.csv
+**.pyc
+notebooks/*.mp4
+notebooks/libmypaint
+notebooks/mypaint
+notebooks/tf_vae
